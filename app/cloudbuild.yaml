@@ -1,0 +1,40 @@
+steps:
+- name: gcr.io/cloud-builders/docker
+  args:
+  - image
+  - build
+  - -t 
+  - ${_REPOSITORY_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY_NAME}/${_IMAGE_NAME}
+  - .
+  
+- name: gcr.io/cloud-builders/docker
+  args:
+  - push
+  -  ${_REPOSITORY_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY_NAME}/${_IMAGE_NAME}
+ 
+- name: gcr.io/cloud-builders/gcloud
+  entrypoint: /bin/bash
+  args:
+  - -c
+  - |
+    
+     apt-get install uuid-runtime
+     image=$(gcloud artifacts docker images describe  ${_REPOSITORY_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY_NAME}/${_IMAGE_NAME} --format "value(image_summary.fully_qualified_digest)")
+     gcloud beta container binauthz attestations sign-and-create --attestor projects/${PROJECT_ID}/attestors/${_ATTESTOR_NAME} \
+     --artifact-url  $image \
+     --key-version  "projects/${PROJECT_ID}/locations/${_KMS_LOCATION}/keyRings/${_KMS_KEY_RING}/cryptokeys/${_KMS_KEY}/cryptoKeyVersions/1"
+
+     
+     echo RELEASE_ID=$(uuidgen -t|cut -d "-" -f 1)
+     gcloud deploy releases create release-$RELEASE_ID --delivery-pipeline  $_DELIVERY_PIPELINE_NAME --region $_DELIVERY_PIPELINE_REGION --skaffold-file skaffold.yaml\
+     --images=image-1=image \
+     --inital-rollout-labels=release-number=$RELEASE_ID
+
+    
+
+
+images:
+-  ${_REPOSITORY_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY_NAME}/${_IMAGE_NAME}
+ 
+
+serviceAccount: "projects/${PROJECT_ID}/serviceAccounts/${_CLOUD_BUILD_SA}"

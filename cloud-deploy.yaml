@@ -1,0 +1,39 @@
+apiVersion: deploy.cloud.google.com/v1
+kind: DeliveryPipeline
+metadata:
+    name: canary-pipeline
+description: "this is canary deployment "
+serialPipeline:
+   stages:
+   - targetId: canary
+     profiles: []
+     strategy:
+      canary:
+        customCanaryDeployment:
+         phaseConfigs: 
+          - phaseId: alpha 
+            percentage: 25
+            profiles: []
+          - phaseId: beta 
+            percentage: 50
+            profiles: []
+          - phaseId: stable
+            percentage: 100
+            profiles: []
+---
+apiVersion : deploy.cloud.google.com/v1
+kind: Target
+metadata:
+   name: canary
+description: "target named canary"
+gke:
+   cluster: projects/PROJECT_ID/locations/CLUSTER_LOCATION/clusters/CLUSTER_NAME
+executionConfigs:
+- usages:
+  - RENDER
+  defaultPool:
+     serviceAccount: RENDER
+- usages:
+  - DEPLOY
+  defaultPool:
+    serviceAccount: DEPLOYER

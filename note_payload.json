@@ -1,0 +1,8 @@
+{
+  "name": "projects/PROJECT_ID/notes/NOTE_ID",
+  "attestation": {
+    "hint": {
+      "human_readable_name": "DESCRIPTION"
+    }
+  }
+}
