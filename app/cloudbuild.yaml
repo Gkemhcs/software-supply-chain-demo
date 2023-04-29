@@ -4,7 +4,7 @@ steps:
   - image
   - build
   - -t 
-  - ${_REPOSITORY_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY_NAME}/${_IMAGE_NAME}
+  - ${_REPOSITORY_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY_NAME}/software
   - .
   
 - name: gcr.io/cloud-builders/docker
