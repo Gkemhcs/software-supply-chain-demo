@@ -71,7 +71,7 @@ curl -X POST  \
 echo "ENTER THE ATTESTOR NAME:-"
 read ATTESTOR_NAME
 gcloud container binauthz attestors create $ATTESTOR_NAME --attestation-authority-note $NOTE_ID \
---attestation-authority-note-project $PROJECT_ID \
+--attestation-authority-note-project $PROJECT_ID 
 echo "ATTESTOR NAMED $ATTESTOR_NAME WAS SUCCESSFULLY CREATED"
 echo "ADDING THE KMS KEYS TO ATTESTOR FOR ATTESTATION SIGNING "
 gcloud container binauthz attestors public-keys add --attestor $ATTESTOR_NAME \
@@ -88,6 +88,24 @@ echo "the policy file is opening in 5 seconds please add the require attestaions
 echo "requiresAttestationsBy:"
 echo "- projects/project-name/locations/locations-name/attestors/attestor-name"
 echo "KMS KEYRINGS AND KEYS AR SUCCESFULLY CREATED"
+nano ba-policy.yaml 
+gcloud container binauthz policy import ba-policy.yaml
+echo "CREATING CLOUD DEPLOY PIPELINES"
+echo "ENTER THE DELIVERY PIPELINE NAME"
+read DELIVERY_PIPELINE_NAME
+echo "ENTER THE REGION IN WHICH YOU WANT TO CREATE A DELIVERY PIPELINE"
+read DELIVERY_PIPELINE_REGION
+RENDER_SERVICE_ACCOUNT=render@${PROJECT_ID}.iam.gserviceaccount.com
+DEPLOYER_SERVICE_ACCOUNT=deployer@${PROJECT_ID}.iam.gserviceaccount.com
+sed -i s/"canary-pipeline"/"${DELIVERY_PIPELINE_NAME}"/ cloud-deploy.yaml
+sed -i s/RENDER_SA/$RENDER_SERVICE_ACCOUNT/ cloud-deploy.yaml
+sed -i s/PROJECT_ID/$PROJECT_ID/ cloud-deploy.yaml
+sed -i s/CLUSTER_LOCATION/$CLUSTER_LOCATION/ cloud-deploy.yaml
+sed -i s/CLUSTER_NAME/$CLUSTER_NAME/ cloud-deploy.yaml
+sed -i s/DEPLOYER_SA/$DEPLOYER_SERVICE_ACCOUNT/ cloud-deploy.yaml
+gcloud deploy apply --file cloud-deploy.yaml --region $DELIVERY_PIPELINE_REGION 
+echo "ok"
+echo "DELIVERY PIPELINE NAMED ${DELIVERY_PIPELINE_NAME } CREATED SUCCESSFULLY"
 
 
 echo "CREATING REQUIRED SERVICE ACCOUNTS"
@@ -98,7 +116,7 @@ CLOUD_BUILDER_SA="cloud-builder@${PROJECT_ID}.iam.gserviceaccount.com"
 
 gcloud projects add-iam-policy-binding  $PROJECT_ID \
 --member "serviceAccount:${CLOUD_BUILDER_SA}" \
---role roles/name: roles/iam.serviceAccountUser
+--role roles/iam.serviceAccountUser
 gcloud artifacts repositories add-iam-policy-binding $REPOSITORY_NAME --location $REPOSITORY_LOCATION \
 --member "serviceAccount:${CLOUD_BUILDER_SA}" \
 --role roles/artifactregistry.createOnPushWriter
@@ -111,60 +129,48 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
 gcloud projects add-iam-policy-binding $PROJECT_ID \
 --member "serviceAccount:${CLOUD_BUILDER_SA}" \
 --role roles/logging.logWriter
-gcloud deploy delivery-pipelines add-iam-policy-binding  $DELIVERY_PIPELINE_NAME --region $DELIVERY_PIPEINE_REGION \
---member "serviceAccount:${CLOUD_BUILDER_SA}" \
---roles roles/clouddeploy.releaser
-gcloud projects add-iam-policy $PROJECT_ID \
+gcloud deploy delivery-pipelines add-iam-policy-binding  $DELIVERY_PIPELINE_NAME --region $DELIVERY_PIPELINE_REGION \
+--member "serviceAccount:${CLOUD_BUILDER_SA}" \ 
+--role roles/clouddeploy.releaser
+gcloud projects add-iam-policy-binding $PROJECT_ID \
 --member "serviceAccount:${CLOUD_BUILDER_SA}" \
 --role roles/binaryauthorization.attestorsViewer
-gcloud projects add-iam-policy $PROJECT_ID \
+gcloud projects add-iam-policy-binding $PROJECT_ID \
 --member "serviceAccount:${CLOUD_BUILDER_SA}" \
 --role roles/cloudkms.signerVerifier
-gcloud projects add-iam-policy $PROJECT_ID \
+gcloud projects add-iam-policy-binding $PROJECT_ID \
 --member "serviceAccount:${CLOUD_BUILDER_SA}" \
 --role roles/containeranalysis.notes.attacher
-RENDER_SERVICE_ACCOUNT=render@${PROJECT_ID}.iam.gserviceaccount.com
-DEPLOYER_SERVICE_ACCOUNT=deployer@${PROJECT_ID}.iam.gserviceaccount.com
+
 gcloud iam service-accounts create render --display-name deploy-render 
 gcloud iam service-accounts create deployer --display-name deploy-deployer
-gcloud deploy delivery-pipelines add-iam-policy-binding $DELIVERY_PIPELINE_NAME --region DELIVERY_PIPELINE_REGION \
+ gcloud projects add-iam-policy-binding $PROJECT_ID \
 --member "serviceAccount:render@${PROJECT_ID}.iam.gserviceaccount.com" \
 --role roles/clouddeploy.jobRunner
-gcloud deploy delivery-pipelines add-iam-policy-binding $DELIVERY_PIPELINE_NAME --region DELIVERY_PIPELINE_REGION \
+gcloud projects add-iam-policy-binding $PROJECT_ID \
 --member "serviceAccount:deployer@${PROJECT_ID}.iam.gserviceaccount.com" \
 --role roles/clouddeploy.jobRunner
-gcloud projects add-iam-policy-bonding $PROJECT_ID \
---member "serviceAccount:${DEPLOYER_SERVICE_ACCOUNT}"
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+--member "serviceAccount:${DEPLOYER_SERVICE_ACCOUNT}" \
 --role roles/container.developer
-gcloud projects add-iam-policy-bonding $PROJECT_ID \
---member "serviceAccount:${DEPLOYER_SERVICE_ACCOUNT}"
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+--member "serviceAccount:${DEPLOYER_SERVICE_ACCOUNT}" \
 --role roles/iam.serviceAccountUser
-gcloud projects add-iam-policy-bonding $PROJECT_ID \
---member "serviceAccount:${RENDER_SERVICE_ACCOUNT}"
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+--member "serviceAccount:${RENDER_SERVICE_ACCOUNT}" \
 --role roles/iam.serviceAccountUser
-sed -i s/RENDER/$RENDER_SERVICE_ACCOUNT/ cloud-deploy.yaml
-sed -i s/PROJECT_ID/$PROJECT_ID/ cloud-deploy.yaml
-sed -i s/CLUSTER_LOCATION/$CLUSTER_LOCATION/ cloud-deploy.yaml
-sed -i s/CLUSTER_NAME/$CLUSTER_NAME/ cloud-deploy.yaml
-sed -i s/DEPLOYER/$DEPLOYER_SERVICE_ACCOUNT/ cloud-deploy.yaml
 
-echo "CREATING CLOUD DEPLOY PIPELINES"
-echo "ENTER THE DELIVERY PIPELINE NAME"
-read DELIVERY_PIPELINE_NAME
-echo "ENTER THE REGION IN WHICH YOU WANT TO CREATE A DELIVERY PIPELINE"
-read DELIVERY_PIPEINE_REGION
-sed -i s/"canary-pipeline"/"${DELIVERY_PIPELINE_NAME}"/ cloud-deploy.yaml
-gcloud deploy apply --file cloud-deploy.yaml --region $DELIVERY_PIPEINE_REGION 
-echo "DELIVERY PIPELINE NAMED ${DELIVERY_PIPELINE_NAME } CREATED SUCCESSFULLY"
+
 echo "CREATING THE CONNECTIONS CLOUDBUILD TO GITHUB "
 echo "PLEASE CREATE A AUTHORIZED TOKEN FROM YOUR GITHUB ACCOUNT AND COPY IT"
-CLOUD_BUILD_SERVICE_AGENT="service-${PN}@gcp-sa-cloudbuild.iam.gserviceaccount.com"
+CLOUD_BUILD_SERVICE_AGENT="service-${PROJECT_NUMBER}@gcp-sa-cloudbuild.iam.gserviceaccount.com"
 gcloud projects add-iam-policy-binding ${PROJECT_ID} \
          --member="serviceAccount:${CLOUD_BUILD_SERVICE_AGENT}" \
          --role="roles/secretmanager.admin"
 echo "ENTER YOUR GITHUB AUTHORIZED TOKEN"
 read GITHUB_TOKEN
 echo $GITHUB_TOKEN|gcloud secrets create git-cred --data-file -
+
 gcloud secrets add-iam-policy-binding git-cred \
     --member="serviceAccount:${CLOUD_BUILD_SERVICE_AGENT}" \
     --role="roles/secretmanager.secretAccessor"
@@ -174,7 +180,7 @@ gcloud alpha builds connections create github connection-1 \
 sleep 60
 echo  "ENTER YOUR REPO URL"
 read REPO_URL
-gcloud alpha builds repositories create github repo-1 --connection connection-1 \
+gcloud alpha builds repositories create  repo-1 --connection connection-1 \
 --region $DELIVERY_PIPELINE_REGION \
 --remote-uri $REPO_URL 
 echo "CREATING THE BUILD TRIGGER"
@@ -182,7 +188,7 @@ echo "ENTER THE NAME OF DOCKER IMAGE "
 read IMAGE_NAME
 gcloud alpha builds triggers create github \
   --name=trigger-chain \
-  --repository=projects/$PROJECT_ID/locations/DELIVERY_PIPELINE_REGION/connections/connection-1/repositories/repo-1 \
+  --repository=projects/$PROJECT_ID/locations/$DELIVERY_PIPELINE_REGION/connections/connection-1/repositories/repo-1 \
   --branch-pattern=main # or --tag-pattern=TAG_PATTERN \
   --build-config=app/cloudbuild.yaml \
   --region=DELIVERY_PIPELINE_REGION
