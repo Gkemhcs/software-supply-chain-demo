@@ -25,10 +25,10 @@ steps:
      --key-version  "projects/${PROJECT_ID}/locations/${_KMS_LOCATION}/keyRings/${_KMS_KEY_RING}/cryptokeys/${_KMS_KEY}/cryptoKeyVersions/1"
 
      
-     echo RELEASE_ID=$(uuidgen -t|cut -d "-" -f 1)
-     gcloud deploy releases create release-$RELEASE_ID --delivery-pipeline  $_DELIVERY_PIPELINE_NAME --region $_DELIVERY_PIPELINE_REGION --skaffold-file skaffold.yaml\
+     echo release_id=$(uuidgen -t|cut -d "-" -f 1)
+     gcloud deploy releases create release-$release_id --delivery-pipeline  $_DELIVERY_PIPELINE_NAME --region $_DELIVERY_PIPELINE_REGION --skaffold-file skaffold.yaml\
      --images=image-1=image \
-     --inital-rollout-labels=release-number=$RELEASE_ID
+     --inital-rollout-labels=release-number=$release_id
 
     
 
