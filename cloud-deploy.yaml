@@ -36,4 +36,4 @@ executionConfigs:
 - usages:
   - DEPLOY
   defaultPool:
-    serviceAccount: DEPLOYER_S
+    serviceAccount: DEPLOYER_SA
