@@ -32,8 +32,8 @@ executionConfigs:
 - usages:
   - RENDER
   defaultPool:
-     serviceAccount: RENDER
+     serviceAccount: RENDER_SA
 - usages:
   - DEPLOY
   defaultPool:
-    serviceAccount: DEPLOYER
+    serviceAccount: DEPLOYER_S
