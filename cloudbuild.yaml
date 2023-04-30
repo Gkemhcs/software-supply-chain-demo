@@ -24,7 +24,7 @@ steps:
      --artifact-url  $image \
      --key-version  "projects/${PROJECT_ID}/locations/${_KMS_LOCATION}/keyRings/${_KMS_KEY_RING}/cryptokeys/${_KMS_KEY}/cryptoKeyVersions/1"
 
-     
+     echo ok
  
      gcloud deploy releases create release-10 --delivery-pipeline  $_DELIVERY_PIPELINE_NAME --region $_DELIVERY_PIPELINE_REGION --skaffold-file skaffold.yaml\
      --images=image-1=image \
