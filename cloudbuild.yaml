@@ -5,8 +5,7 @@ steps:
   - build
   - -t 
   - ${_REPOSITORY_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY_NAME}/software
-  - -f
-  - "app/Dockerfile"
+  - .
   
 - name: gcr.io/cloud-builders/docker
   args:
