@@ -18,8 +18,7 @@ steps:
   args:
   - -c
   - |
-    
-     apt-get install uuid-runtime
+ 
      image=$(gcloud artifacts docker images describe  ${_REPOSITORY_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY_NAME}/software --format "value(image_summary.fully_qualified_digest)")
      gcloud beta container binauthz attestations sign-and-create --attestor projects/${PROJECT_ID}/attestors/${_ATTESTOR_NAME} \
      --artifact-url  $image \
