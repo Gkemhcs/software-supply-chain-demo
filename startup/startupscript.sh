@@ -1,4 +1,4 @@
-#!  /bin/bash
+   #!  /bin/bash
 echo "WELCOME "
 echo "WE ARE ABOUT TO START"
 echo "ENTER YOUR PROJECT ID:-"
@@ -141,7 +141,9 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
 gcloud projects add-iam-policy-binding $PROJECT_ID \
 --member "serviceAccount:${CLOUD_BUILDER_SA}" \
 --role roles/containeranalysis.notes.attacher
-
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+--member "serviceAccount:${CLOUD_BUILDER_SA}" \
+--role roles/serviceusage.viewer
 gcloud iam service-accounts create render --display-name deploy-render 
 gcloud iam service-accounts create deployer --display-name deploy-deployer
  gcloud projects add-iam-policy-binding $PROJECT_ID \
