@@ -19,4 +19,6 @@
 AND THEN RUN THE STARTUP-SCRIPT
  ```bash
 cd startup
+chmod +x startupscript.sh
+./startupscript.sh
  ```
